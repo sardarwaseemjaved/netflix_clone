@@ -7,6 +7,7 @@ import { FaGithub } from 'react-icons/fa';
 import Input from "@/components/Input";
 import { useRouter } from 'next/navigation';
 import { errorHandler } from '@/utils/errorHandler';
+import SpinnerOverlay from '@/components/SpinnerOverlay';
 
 
 type VariantT = 'login' | 'register'
@@ -15,6 +16,8 @@ type FormT = {
     email: string,
     password: string
 }
+type ProvidersT = 'google' | 'github';
+
 const Auth = () => {
 
     const router = useRouter();
@@ -25,7 +28,8 @@ const Auth = () => {
         name: '',
         email: '',
         password: ''
-    })
+    });
+    const [isLoading, setLoading] = useState(false);
 
     const toggleVariant = useCallback(() => {
         setVariant((currentVariant) => currentVariant === 'login' ? 'register' : 'login');
@@ -35,30 +39,35 @@ const Auth = () => {
 
     const onLogin = useCallback(async () => {
         try {
+            setLoading(true)
             await signIn('credentials', {
                 email: formData.email,
                 password: formData.password,
                 redirect: false,
                 callbackUrl: '/'
             });
-
+            setLoading(false)
             router.push('/');
         } catch (error) {
-            console.log(error);
+            setLoading(false)
+            errorHandler(error)
         }
     }, [JSON.stringify(formData), router]);
 
     const onRegister = useCallback(async () => {
         try {
+            setLoading(true)
             await axios.post('/api/register', {
                 email: formData.email,
                 name: formData.name,
                 password: formData.password,
             });
 
+            setLoading(false)
             onLogin();
 
         } catch (error) {
+            setLoading(false)
             errorHandler(error)
         }
     }, [JSON.stringify(formData), onLogin]);
@@ -67,8 +76,16 @@ const Auth = () => {
         e.preventDefault();
         variant === 'login' ? onLogin() : onRegister()
     }, [variant, onLogin, onRegister])
+
+    const onSocialLogin = useCallback(async (provider: ProvidersT) => {
+        setLoading(true)
+        await signIn(provider, { callbackUrl: '/' })
+        setLoading(false)
+    }, [])
+
     return (
         <div className="relative h-full w-full bg-[url('/images/hero.jpg')] bg-no-repeat bg-center bg-fixed bg-cover">
+            <SpinnerOverlay visible={isLoading} />
             <div className="bg-black w-full h-full lg:bg-opacity-50">
                 <nav className="px-12 py-5">
                     <img src="/images/logo.png" className="h-12" alt="Logo" />
@@ -115,10 +132,10 @@ const Auth = () => {
                             </button>
                         </form>
                         <div className="flex flex-row items-center gap-4 mt-8 justify-center">
-                            <div onClick={onLogin} className="w-10 h-10 bg-white rounded-full flex items-center justify-center cursor-pointer hover:opacity-80 transition">
+                            <div onClick={() => onSocialLogin('google')} className="w-10 h-10 bg-white rounded-full flex items-center justify-center cursor-pointer hover:opacity-80 transition">
                                 <FcGoogle size={32} />
                             </div>
-                            <div onClick={onLogin} className="w-10 h-10 bg-white rounded-full flex items-center justify-center cursor-pointer hover:opacity-80 transition">
+                            <div onClick={() => onSocialLogin('github')} className="w-10 h-10 bg-white rounded-full flex items-center justify-center cursor-pointer hover:opacity-80 transition">
                                 <FaGithub size={32} />
                             </div>
                         </div>
