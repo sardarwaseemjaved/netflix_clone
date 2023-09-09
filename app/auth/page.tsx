@@ -1,8 +1,12 @@
 "use client"
-import Input from "@/components/Input";
-import { useCallback, useState } from "react";
+import axios, { AxiosError, AxiosResponse } from 'axios';
+import { FormEvent, useCallback, useState } from "react";
+import { signIn } from 'next-auth/react';
 import { FcGoogle } from 'react-icons/fc';
 import { FaGithub } from 'react-icons/fa';
+import Input from "@/components/Input";
+import { useRouter } from 'next/navigation';
+import { errorHandler } from '@/utils/errorHandler';
 
 
 type VariantT = 'login' | 'register'
@@ -12,6 +16,8 @@ type FormT = {
     password: string
 }
 const Auth = () => {
+
+    const router = useRouter();
 
     const [variant, setVariant] = useState<VariantT>('login')
 
@@ -27,14 +33,40 @@ const Auth = () => {
 
     const onChange = (e: any) => setFormData(prevState => ({ ...prevState, [e.target.name]: e.target.value }));
 
-    const onLogin = () => {
-        console.log('LOGIN FLOW')
-    }
+    const onLogin = useCallback(async () => {
+        try {
+            await signIn('credentials', {
+                email: formData.email,
+                password: formData.password,
+                redirect: false,
+                callbackUrl: '/'
+            });
 
-    const onRegister = () => {
-        console.log('REGISTER FLOW');
-    }
+            router.push('/');
+        } catch (error) {
+            console.log(error);
+        }
+    }, [JSON.stringify(formData), router]);
 
+    const onRegister = useCallback(async () => {
+        try {
+            await axios.post('/api/register', {
+                email: formData.email,
+                name: formData.name,
+                password: formData.password,
+            });
+
+            onLogin();
+
+        } catch (error) {
+            errorHandler(error)
+        }
+    }, [JSON.stringify(formData), onLogin]);
+
+    const handleSumbit = useCallback((e: FormEvent) => {
+        e.preventDefault();
+        variant === 'login' ? onLogin() : onRegister()
+    }, [variant, onLogin, onRegister])
     return (
         <div className="relative h-full w-full bg-[url('/images/hero.jpg')] bg-no-repeat bg-center bg-fixed bg-cover">
             <div className="bg-black w-full h-full lg:bg-opacity-50">
@@ -46,34 +78,42 @@ const Auth = () => {
                         <h2 className="text-white text-4xl mb-8 font-semibold">
                             Sign in
                         </h2>
-                        <div className="flex flex-col gap-4">
-                            {variant === 'register' && (
+                        <form onSubmit={handleSumbit}>
+                            <div className="flex flex-col gap-4">
+                                {variant === 'register' && (
+                                    <Input
+                                        id="name"
+                                        name="name"
+                                        type="text"
+                                        label="Username"
+                                        value={formData.name}
+                                        onChange={onChange}
+                                        required
+                                    />
+                                )}
                                 <Input
-                                    id="name"
-                                    type="text"
-                                    label="Username"
-                                    value={formData.name}
+                                    id="email"
+                                    name="email"
+                                    type="email"
+                                    label="Email address or phone number"
+                                    value={formData.email}
                                     onChange={onChange}
+                                    required
                                 />
-                            )}
-                            <Input
-                                id="email"
-                                type="email"
-                                label="Email address or phone number"
-                                value={formData.email}
-                                onChange={onChange}
-                            />
-                            <Input
-                                type="password"
-                                id="password"
-                                label="Password"
-                                value={formData.password}
-                                onChange={onChange}
-                            />
-                        </div>
-                        <button onClick={variant === 'login' ? onLogin : onRegister} className="bg-red-600 py-3 text-white rounded-md w-full mt-10 hover:bg-red-700 transition">
-                            {variant === 'login' ? 'Login' : 'Sign up'}
-                        </button>
+                                <Input
+                                    id="password"
+                                    name="password"
+                                    type="password"
+                                    label="Password"
+                                    value={formData.password}
+                                    onChange={onChange}
+                                    required
+                                />
+                            </div>
+                            <button type='submit' className="bg-red-600 py-3 text-white rounded-md w-full mt-10 hover:bg-red-700 transition">
+                                {variant === 'login' ? 'Login' : 'Sign up'}
+                            </button>
+                        </form>
                         <div className="flex flex-row items-center gap-4 mt-8 justify-center">
                             <div onClick={onLogin} className="w-10 h-10 bg-white rounded-full flex items-center justify-center cursor-pointer hover:opacity-80 transition">
                                 <FcGoogle size={32} />
