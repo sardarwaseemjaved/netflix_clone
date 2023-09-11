@@ -1,12 +1,9 @@
 import bcrypt from 'bcrypt';
 import prismadb from '@/libs/prismadb';
 
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 
-export async function GET(req: Request) {
-    return NextResponse.json({ message: 'hello' }, { status: 200 })
-}
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
     try {
         const { email, name, password } = await req.json();
 
@@ -17,7 +14,7 @@ export async function POST(req: Request) {
         })
 
         if (existingUser) {
-            return NextResponse.json({ message: `An account with email ${email} already exists!` }, { status: 422 })
+            return NextResponse.json({ message: `An account with email ${email} already exists!` }, { status: 409 })
         }
 
         const hashedPassword = await bcrypt.hash(password, 12);
@@ -33,6 +30,6 @@ export async function POST(req: Request) {
         })
         return NextResponse.json(user, { status: 200 })
     } catch (error) {
-        return NextResponse.json({ message: `Something went wrong: ${error}` }, { status: 400 })
+        return NextResponse.json({ message: `Something went wrong: ${error}` }, { status: 500 })
     }
 }
