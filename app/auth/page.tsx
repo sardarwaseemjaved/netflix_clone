@@ -33,7 +33,7 @@ const Auth = () => {
 
     useEffect(() => {
         if (session?.status === 'authenticated') {
-            router.push('/');
+            router.push('/profiles');
         }
     }, [session, router]);
 
@@ -50,7 +50,7 @@ const Auth = () => {
                 email: formData.email,
                 password: formData.password,
                 redirect: false,
-                // callbackUrl: '/'
+                callbackUrl: '/profiles'
             });
             setLoading(false)
             console.log(data);

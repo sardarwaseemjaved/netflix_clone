@@ -1,18 +1,9 @@
-import { getServerSession } from 'next-auth';
-import { authOptions } from './api/auth/[...nextauth]/route';
-import { redirect } from 'next/navigation';
 import AccountMenu from '@/components/AccountMenu';
+import ProtectedServerRoute from '@/components/ProtectedServerRoute';
 export default async function Home() {
-  const session = await getServerSession(authOptions);
-  if (!session) {
-    redirect('/auth')
-  }
   return (
-    <section>
+    <ProtectedServerRoute>
       <AccountMenu visible={true} />
-      <h1>Home</h1>
-      <h1>Server Side Rendered</h1>
-      <pre>{JSON.stringify(session)}</pre>
-    </section>
+    </ProtectedServerRoute>
   )
 }

@@ -2,11 +2,11 @@
 @tailwind components;
 @tailwind utilities;
 
-#__next, html {
+#__next,
+html {
   @apply h-full;
 }
 
 body {
   @apply bg-zinc-900 overflow-x-hidden h-full;
-  color:aliceblue;
 }
